@@ -64,7 +64,7 @@ const (
 	// Reasons for deployment conditions
 	//
 	// Progressing:
-	//
+
 	// ReplicaSetUpdatedReason is added in a deployment when one of its replica sets is updated as part
 	// of the rollout process.
 	ReplicaSetUpdatedReason = "ReplicaSetUpdated"
@@ -89,7 +89,7 @@ const (
 	ResumedDeployReason = "DeploymentResumed"
 	//
 	// Available:
-	//
+
 	// MinimumReplicasAvailable is added in a deployment when it has its minimum replicas required available.
 	MinimumReplicasAvailable = "MinimumReplicasAvailable"
 	// MinimumReplicasUnavailable is added in a deployment when it doesn't have the minimum required replicas
@@ -401,7 +401,7 @@ func SetReplicasAnnotations(rs *apps.ReplicaSet, desiredReplicas, maxReplicas in
 	return updated
 }
 
-// AnnotationsNeedUpdate return true if ReplicasAnnotations need to be updated
+// ReplicasAnnotationsNeedUpdate return true if ReplicasAnnotations need to be updated
 func ReplicasAnnotationsNeedUpdate(rs *apps.ReplicaSet, desiredReplicas, maxReplicas int32) bool {
 	if rs.Annotations == nil {
 		return true
@@ -545,6 +545,8 @@ func RsListFromClient(c appsclient.AppsV1Interface) RsListFunc {
 }
 
 // TODO: switch this to full namespacers
+
+// RsListFunc is a ReplicaSet list function
 type RsListFunc func(string, metav1.ListOptions) ([]*apps.ReplicaSet, error)
 type podListFunc func(string, metav1.ListOptions) (*v1.PodList, error)
 
@@ -883,6 +885,7 @@ func ResolveFenceposts(maxSurge, maxUnavailable *intstrutil.IntOrString, desired
 	return int32(surge), int32(unavailable), nil
 }
 
+// HasProgressDeadline returns true if a deployment has a ProgressDeadline, false otherwise
 func HasProgressDeadline(d *apps.Deployment) bool {
 	return d.Spec.ProgressDeadlineSeconds != nil && *d.Spec.ProgressDeadlineSeconds != math.MaxInt32
 }
