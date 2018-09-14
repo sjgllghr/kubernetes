@@ -225,7 +225,7 @@ func newEviction(ns, evictionName string, deleteOption *metav1.DeleteOptions) *v
 	}
 }
 
-func rmSetup(t *testing.T) (*httptest.Server, framework.CloseFunc, *disruption.DisruptionController, informers.SharedInformerFactory, clientset.Interface) {
+func rmSetup(t *testing.T) (*httptest.Server, framework.CloseFunc, *disruption.Controller, informers.SharedInformerFactory, clientset.Interface) {
 	masterConfig := framework.NewIntegrationTestMasterConfig()
 	_, s, closeFn := framework.RunAMaster(masterConfig)
 

@@ -126,7 +126,7 @@ func makeTestServer(t *testing.T, namespace string) (*httptest.Server, *utiltest
 }
 
 type endpointController struct {
-	*EndpointController
+	*Controller
 	podStore       cache.Store
 	serviceStore   cache.Store
 	endpointsStore cache.Store

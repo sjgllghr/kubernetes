@@ -231,7 +231,7 @@ func initTestSchedulerWithOptions(
 
 // initDisruptionController initializes and runs a Disruption Controller to properly
 // update PodDisuptionBudget objects.
-func initDisruptionController(context *TestContext) *disruption.DisruptionController {
+func initDisruptionController(context *TestContext) *disruption.Controller {
 	informers := informers.NewSharedInformerFactory(context.clientSet, 12*time.Hour)
 
 	dc := disruption.NewDisruptionController(

@@ -83,7 +83,7 @@ func (ps *pdbStates) VerifyDisruptionAllowed(t *testing.T, key string, disruptio
 }
 
 type disruptionController struct {
-	*DisruptionController
+	*Controller
 
 	podStore cache.Store
 	pdbStore cache.Store
