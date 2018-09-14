@@ -145,7 +145,7 @@ func getRecentUnmetScheduleTimes(sj batchv1beta1.CronJob, now time.Time) ([]time
 		// but less than "lots".
 		if len(starts) > 100 {
 			// We can't get the most recent times so just return an empty slice
-			return []time.Time{}, fmt.Errorf("Too many missed start time (> 100). Set or decrease .spec.startingDeadlineSeconds or check clock skew.")
+			return []time.Time{}, fmt.Errorf("too many missed start time (> 100). Set or decrease .spec.startingDeadlineSeconds or check clock skew")
 		}
 	}
 	return starts, nil
@@ -177,8 +177,8 @@ func getTimeHash(scheduledTime time.Time) int64 {
 	return scheduledTime.Unix()
 }
 
-// makeCreatedByRefJson makes a json string with an object reference for use in "created-by" annotation value
-func makeCreatedByRefJson(object runtime.Object) (string, error) {
+// makeCreatedByRefJSON makes a json string with an object reference for use in "created-by" annotation value
+func makeCreatedByRefJSON(object runtime.Object) (string, error) {
 	createdByRef, err := ref.GetReference(legacyscheme.Scheme, object)
 	if err != nil {
 		return "", fmt.Errorf("unable to get controller reference: %v", err)
@@ -189,13 +189,13 @@ func makeCreatedByRefJson(object runtime.Object) (string, error) {
 	//   We need to consistently handle this case of annotation versioning.
 	codec := legacyscheme.Codecs.LegacyCodec(schema.GroupVersion{Group: v1.GroupName, Version: "v1"})
 
-	createdByRefJson, err := runtime.Encode(codec, &v1.SerializedReference{
+	createdByRefJSON, err := runtime.Encode(codec, &v1.SerializedReference{
 		Reference: *createdByRef,
 	})
 	if err != nil {
 		return "", fmt.Errorf("unable to serialize controller reference: %v", err)
 	}
-	return string(createdByRefJson), nil
+	return string(createdByRefJSON), nil
 }
 
 func getFinishedStatus(j *batchv1.Job) (bool, batchv1.JobConditionType) {
@@ -207,7 +207,7 @@ func getFinishedStatus(j *batchv1.Job) (bool, batchv1.JobConditionType) {
 	return false, ""
 }
 
-func IsJobFinished(j *batchv1.Job) bool {
+func isJobFinished(j *batchv1.Job) bool {
 	isFinished, _ := getFinishedStatus(j)
 	return isFinished
 }

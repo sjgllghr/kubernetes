@@ -304,7 +304,7 @@ func (f *fakePodControl) DeletePod(namespace string, podID string, object runtim
 }
 
 type daemonSetsController struct {
-	*DaemonSetsController
+	*SetsController
 
 	dsStore      cache.Store
 	historyStore cache.Store

@@ -58,7 +58,8 @@ import (
 // controllerKind contains the schema.GroupVersionKind for this controller type.
 var controllerKind = batchv1beta1.SchemeGroupVersion.WithKind("CronJob")
 
-type CronJobController struct {
+// Controller is a cronjob controller object
+type Controller struct {
 	kubeClient clientset.Interface
 	jobControl jobControlInterface
 	sjControl  sjControlInterface
@@ -66,7 +67,9 @@ type CronJobController struct {
 	recorder   record.EventRecorder
 }
 
-func NewCronJobController(kubeClient clientset.Interface) (*CronJobController, error) {
+// NewCronJobController creates a new cronjob Controller object
+// returns an error if kubeClient's coreV1 REST client has a non-nil rate limiter
+func NewCronJobController(kubeClient clientset.Interface) (*Controller, error) {
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(glog.Infof)
 	eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: kubeClient.CoreV1().Events("")})
@@ -77,7 +80,7 @@ func NewCronJobController(kubeClient clientset.Interface) (*CronJobController, e
 		}
 	}
 
-	jm := &CronJobController{
+	jm := &Controller{
 		kubeClient: kubeClient,
 		jobControl: realJobControl{KubeClient: kubeClient},
 		sjControl:  &realSJControl{KubeClient: kubeClient},
@@ -89,7 +92,7 @@ func NewCronJobController(kubeClient clientset.Interface) (*CronJobController, e
 }
 
 // Run the main goroutine responsible for watching and syncing jobs.
-func (jm *CronJobController) Run(stopCh <-chan struct{}) {
+func (jm *Controller) Run(stopCh <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 	glog.Infof("Starting CronJob Manager")
 	// Check things every 10 second.
@@ -99,7 +102,7 @@ func (jm *CronJobController) Run(stopCh <-chan struct{}) {
 }
 
 // syncAll lists all the CronJobs and Jobs and reconciles them.
-func (jm *CronJobController) syncAll() {
+func (jm *Controller) syncAll() {
 	// List children (Jobs) before parents (CronJob).
 	// This guarantees that if we see any Job that got orphaned by the GC orphan finalizer,
 	// we must also see that the parent CronJob has non-nil DeletionTimestamp (see #42639).
@@ -203,7 +206,7 @@ func syncOne(sj *batchv1beta1.CronJob, js []batchv1.Job, now time.Time, jc jobCo
 	for _, j := range js {
 		childrenJobs[j.ObjectMeta.UID] = true
 		found := inActiveList(*sj, j.ObjectMeta.UID)
-		if !found && !IsJobFinished(&j) {
+		if !found && !isJobFinished(&j) {
 			recorder.Eventf(sj, v1.EventTypeWarning, "UnexpectedJob", "Saw a job that the controller did not create or forgot: %v", j.Name)
 			// We found an unfinished job that has us as the parent, but it is not in our Active list.
 			// This could happen if we crashed right after creating the Job and before updating the status,
@@ -215,7 +218,7 @@ func syncOne(sj *batchv1beta1.CronJob, js []batchv1.Job, now time.Time, jc jobCo
 			// user has permission to create a job within a namespace, then they have permission to make any scheduledJob
 			// in the same namespace "adopt" that job.  ReplicaSets and their Pods work the same way.
 			// TBS: how to update sj.Status.LastScheduleTime if the adopted job is newer than any we knew about?
-		} else if found && IsJobFinished(&j) {
+		} else if found && isJobFinished(&j) {
 			deleteFromActiveList(sj, j.ObjectMeta.UID)
 			// TODO: event to call out failure vs success.
 			recorder.Eventf(sj, v1.EventTypeNormal, "SawCompletedJob", "Saw completed job: %v", j.Name)

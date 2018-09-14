@@ -87,9 +87,9 @@ const (
 // controllerKind contains the schema.GroupVersionKind for this controller type.
 var controllerKind = apps.SchemeGroupVersion.WithKind("DaemonSet")
 
-// DaemonSetsController is responsible for synchronizing DaemonSet objects stored
+// SetsController is responsible for synchronizing DaemonSet objects stored
 // in the system with actual running pods.
-type DaemonSetsController struct {
+type SetsController struct {
 	kubeClient    clientset.Interface
 	eventRecorder record.EventRecorder
 	podControl    controller.PodControlInterface
@@ -140,7 +140,7 @@ type DaemonSetsController struct {
 	failedPodsBackoff *flowcontrol.Backoff
 }
 
-// NewDaemonSetsController creates a new DaemonSetsController
+// NewDaemonSetsController creates a new daemon SetsController
 func NewDaemonSetsController(
 	daemonSetInformer appsinformers.DaemonSetInformer,
 	historyInformer appsinformers.ControllerRevisionInformer,
@@ -148,7 +148,7 @@ func NewDaemonSetsController(
 	nodeInformer coreinformers.NodeInformer,
 	kubeClient clientset.Interface,
 	failedPodsBackoff *flowcontrol.Backoff,
-) (*DaemonSetsController, error) {
+) (*SetsController, error) {
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(glog.Infof)
 	eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: kubeClient.CoreV1().Events("")})
@@ -158,7 +158,7 @@ func NewDaemonSetsController(
 			return nil, err
 		}
 	}
-	dsc := &DaemonSetsController{
+	dsc := &SetsController{
 		kubeClient:    kubeClient,
 		eventRecorder: eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "daemonset-controller"}),
 		podControl: controller.RealPodControl{
@@ -244,7 +244,7 @@ func indexByPodNodeName(obj interface{}) ([]string, error) {
 	return []string{pod.Spec.NodeName}, nil
 }
 
-func (dsc *DaemonSetsController) deleteDaemonset(obj interface{}) {
+func (dsc *SetsController) deleteDaemonset(obj interface{}) {
 	ds, ok := obj.(*apps.DaemonSet)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
@@ -263,7 +263,7 @@ func (dsc *DaemonSetsController) deleteDaemonset(obj interface{}) {
 }
 
 // Run begins watching and syncing daemon sets.
-func (dsc *DaemonSetsController) Run(workers int, stopCh <-chan struct{}) {
+func (dsc *SetsController) Run(workers int, stopCh <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 	defer dsc.queue.ShutDown()
 
@@ -283,13 +283,13 @@ func (dsc *DaemonSetsController) Run(workers int, stopCh <-chan struct{}) {
 	<-stopCh
 }
 
-func (dsc *DaemonSetsController) runWorker() {
+func (dsc *SetsController) runWorker() {
 	for dsc.processNextWorkItem() {
 	}
 }
 
 // processNextWorkItem deals with one key off the queue.  It returns false when it's time to quit.
-func (dsc *DaemonSetsController) processNextWorkItem() bool {
+func (dsc *SetsController) processNextWorkItem() bool {
 	dsKey, quit := dsc.queue.Get()
 	if quit {
 		return false
@@ -308,7 +308,7 @@ func (dsc *DaemonSetsController) processNextWorkItem() bool {
 	return true
 }
 
-func (dsc *DaemonSetsController) enqueue(ds *apps.DaemonSet) {
+func (dsc *SetsController) enqueue(ds *apps.DaemonSet) {
 	key, err := controller.KeyFunc(ds)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("Couldn't get key for object %#v: %v", ds, err))
@@ -319,7 +319,7 @@ func (dsc *DaemonSetsController) enqueue(ds *apps.DaemonSet) {
 	dsc.queue.Add(key)
 }
 
-func (dsc *DaemonSetsController) enqueueRateLimited(ds *apps.DaemonSet) {
+func (dsc *SetsController) enqueueRateLimited(ds *apps.DaemonSet) {
 	key, err := controller.KeyFunc(ds)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("Couldn't get key for object %#v: %v", ds, err))
@@ -329,7 +329,7 @@ func (dsc *DaemonSetsController) enqueueRateLimited(ds *apps.DaemonSet) {
 	dsc.queue.AddRateLimited(key)
 }
 
-func (dsc *DaemonSetsController) enqueueDaemonSetAfter(obj interface{}, after time.Duration) {
+func (dsc *SetsController) enqueueDaemonSetAfter(obj interface{}, after time.Duration) {
 	key, err := controller.KeyFunc(obj)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("Couldn't get key for object %+v: %v", obj, err))
@@ -341,7 +341,7 @@ func (dsc *DaemonSetsController) enqueueDaemonSetAfter(obj interface{}, after ti
 }
 
 // getDaemonSetsForPod returns a list of DaemonSets that potentially match the pod.
-func (dsc *DaemonSetsController) getDaemonSetsForPod(pod *v1.Pod) []*apps.DaemonSet {
+func (dsc *SetsController) getDaemonSetsForPod(pod *v1.Pod) []*apps.DaemonSet {
 	sets, err := dsc.dsLister.GetPodDaemonSets(pod)
 	if err != nil {
 		return nil
@@ -356,7 +356,7 @@ func (dsc *DaemonSetsController) getDaemonSetsForPod(pod *v1.Pod) []*apps.Daemon
 
 // getDaemonSetsForHistory returns a list of DaemonSets that potentially
 // match a ControllerRevision.
-func (dsc *DaemonSetsController) getDaemonSetsForHistory(history *apps.ControllerRevision) []*apps.DaemonSet {
+func (dsc *SetsController) getDaemonSetsForHistory(history *apps.ControllerRevision) []*apps.DaemonSet {
 	daemonSets, err := dsc.dsLister.GetHistoryDaemonSets(history)
 	if err != nil || len(daemonSets) == 0 {
 		return nil
@@ -372,7 +372,7 @@ func (dsc *DaemonSetsController) getDaemonSetsForHistory(history *apps.Controlle
 
 // addHistory enqueues the DaemonSet that manages a ControllerRevision when the ControllerRevision is created
 // or when the controller manager is restarted.
-func (dsc *DaemonSetsController) addHistory(obj interface{}) {
+func (dsc *SetsController) addHistory(obj interface{}) {
 	history := obj.(*apps.ControllerRevision)
 	if history.DeletionTimestamp != nil {
 		// On a restart of the controller manager, it's possible for an object to
@@ -406,7 +406,7 @@ func (dsc *DaemonSetsController) addHistory(obj interface{}) {
 // updateHistory figures out what DaemonSet(s) manage a ControllerRevision when the ControllerRevision
 // is updated and wake them up. If anything of the ControllerRevision has changed, we need to  awaken
 // both the old and new DaemonSets.
-func (dsc *DaemonSetsController) updateHistory(old, cur interface{}) {
+func (dsc *SetsController) updateHistory(old, cur interface{}) {
 	curHistory := cur.(*apps.ControllerRevision)
 	oldHistory := old.(*apps.ControllerRevision)
 	if curHistory.ResourceVersion == oldHistory.ResourceVersion {
@@ -453,7 +453,7 @@ func (dsc *DaemonSetsController) updateHistory(old, cur interface{}) {
 // deleteHistory enqueues the DaemonSet that manages a ControllerRevision when
 // the ControllerRevision is deleted. obj could be an *app.ControllerRevision, or
 // a DeletionFinalStateUnknown marker item.
-func (dsc *DaemonSetsController) deleteHistory(obj interface{}) {
+func (dsc *SetsController) deleteHistory(obj interface{}) {
 	history, ok := obj.(*apps.ControllerRevision)
 
 	// When a delete is dropped, the relist will notice a ControllerRevision in the store not
@@ -486,7 +486,7 @@ func (dsc *DaemonSetsController) deleteHistory(obj interface{}) {
 	dsc.enqueueDaemonSet(ds)
 }
 
-func (dsc *DaemonSetsController) addPod(obj interface{}) {
+func (dsc *SetsController) addPod(obj interface{}) {
 	pod := obj.(*v1.Pod)
 
 	if pod.DeletionTimestamp != nil {
@@ -529,7 +529,7 @@ func (dsc *DaemonSetsController) addPod(obj interface{}) {
 // When a pod is updated, figure out what sets manage it and wake them
 // up. If the labels of the pod have changed we need to awaken both the old
 // and new set. old and cur must be *v1.Pod types.
-func (dsc *DaemonSetsController) updatePod(old, cur interface{}) {
+func (dsc *SetsController) updatePod(old, cur interface{}) {
 	curPod := cur.(*v1.Pod)
 	oldPod := old.(*v1.Pod)
 	if curPod.ResourceVersion == oldPod.ResourceVersion {
@@ -583,7 +583,7 @@ func (dsc *DaemonSetsController) updatePod(old, cur interface{}) {
 
 // listSuspendedDaemonPods lists the Daemon pods that 'want to run, but should not schedule'
 // for the node.
-func (dsc *DaemonSetsController) listSuspendedDaemonPods(node string) (dss []string) {
+func (dsc *SetsController) listSuspendedDaemonPods(node string) (dss []string) {
 	dsc.suspendedDaemonPodsMutex.Lock()
 	defer dsc.suspendedDaemonPodsMutex.Unlock()
 
@@ -599,7 +599,7 @@ func (dsc *DaemonSetsController) listSuspendedDaemonPods(node string) (dss []str
 
 // requeueSuspendedDaemonPods enqueues all DaemonSets which has pods that 'want to run,
 // but should not schedule' for the node; so DaemonSetController will sync up them again.
-func (dsc *DaemonSetsController) requeueSuspendedDaemonPods(node string) {
+func (dsc *SetsController) requeueSuspendedDaemonPods(node string) {
 	dss := dsc.listSuspendedDaemonPods(node)
 	for _, dsKey := range dss {
 		if ns, name, err := cache.SplitMetaNamespaceKey(dsKey); err != nil {
@@ -616,7 +616,7 @@ func (dsc *DaemonSetsController) requeueSuspendedDaemonPods(node string) {
 
 // addSuspendedDaemonPods adds DaemonSet which has pods that 'want to run,
 // but should not schedule' for the node to the suspended queue.
-func (dsc *DaemonSetsController) addSuspendedDaemonPods(node, ds string) {
+func (dsc *SetsController) addSuspendedDaemonPods(node, ds string) {
 	dsc.suspendedDaemonPodsMutex.Lock()
 	defer dsc.suspendedDaemonPodsMutex.Unlock()
 
@@ -628,7 +628,7 @@ func (dsc *DaemonSetsController) addSuspendedDaemonPods(node, ds string) {
 
 // removeSuspendedDaemonPods removes DaemonSet which has pods that 'want to run,
 // but should not schedule' for the node from suspended queue.
-func (dsc *DaemonSetsController) removeSuspendedDaemonPods(node, ds string) {
+func (dsc *SetsController) removeSuspendedDaemonPods(node, ds string) {
 	dsc.suspendedDaemonPodsMutex.Lock()
 	defer dsc.suspendedDaemonPodsMutex.Unlock()
 
@@ -642,7 +642,7 @@ func (dsc *DaemonSetsController) removeSuspendedDaemonPods(node, ds string) {
 	}
 }
 
-func (dsc *DaemonSetsController) deletePod(obj interface{}) {
+func (dsc *SetsController) deletePod(obj interface{}) {
 	pod, ok := obj.(*v1.Pod)
 	// When a delete is dropped, the relist will notice a pod in the store not
 	// in the list, leading to the insertion of a tombstone object which contains
@@ -688,7 +688,7 @@ func (dsc *DaemonSetsController) deletePod(obj interface{}) {
 	dsc.enqueueDaemonSet(ds)
 }
 
-func (dsc *DaemonSetsController) addNode(obj interface{}) {
+func (dsc *SetsController) addNode(obj interface{}) {
 	// TODO: it'd be nice to pass a hint with these enqueues, so that each ds would only examine the added node (unless it has other work to do, too).
 	dsList, err := dsc.dsLister.List(labels.Everything())
 	if err != nil {
@@ -745,7 +745,7 @@ func shouldIgnoreNodeUpdate(oldNode, curNode v1.Node) bool {
 	return apiequality.Semantic.DeepEqual(oldNode, curNode)
 }
 
-func (dsc *DaemonSetsController) updateNode(old, cur interface{}) {
+func (dsc *SetsController) updateNode(old, cur interface{}) {
 	oldNode := old.(*v1.Node)
 	curNode := cur.(*v1.Node)
 	if shouldIgnoreNodeUpdate(*oldNode, *curNode) {
@@ -777,7 +777,7 @@ func (dsc *DaemonSetsController) updateNode(old, cur interface{}) {
 // This also reconciles ControllerRef by adopting/orphaning.
 // Note that returned Pods are pointers to objects in the cache.
 // If you want to modify one, you need to deep-copy it first.
-func (dsc *DaemonSetsController) getDaemonPods(ds *apps.DaemonSet) ([]*v1.Pod, error) {
+func (dsc *SetsController) getDaemonPods(ds *apps.DaemonSet) ([]*v1.Pod, error) {
 	selector, err := metav1.LabelSelectorAsSelector(ds.Spec.Selector)
 	if err != nil {
 		return nil, err
@@ -811,7 +811,7 @@ func (dsc *DaemonSetsController) getDaemonPods(ds *apps.DaemonSet) ([]*v1.Pod, e
 // This also reconciles ControllerRef by adopting/orphaning.
 // Note that returned Pods are pointers to objects in the cache.
 // If you want to modify one, you need to deep-copy it first.
-func (dsc *DaemonSetsController) getNodesToDaemonPods(ds *apps.DaemonSet) (map[string][]*v1.Pod, error) {
+func (dsc *SetsController) getNodesToDaemonPods(ds *apps.DaemonSet) (map[string][]*v1.Pod, error) {
 	claimedPods, err := dsc.getDaemonPods(ds)
 	if err != nil {
 		return nil, err
@@ -835,7 +835,7 @@ func (dsc *DaemonSetsController) getNodesToDaemonPods(ds *apps.DaemonSet) (map[s
 // resolveControllerRef returns the controller referenced by a ControllerRef,
 // or nil if the ControllerRef could not be resolved to a matching controller
 // of the correct Kind.
-func (dsc *DaemonSetsController) resolveControllerRef(namespace string, controllerRef *metav1.OwnerReference) *apps.DaemonSet {
+func (dsc *SetsController) resolveControllerRef(namespace string, controllerRef *metav1.OwnerReference) *apps.DaemonSet {
 	// We can't look up by UID, so look up by Name and then verify UID.
 	// Don't even try to look up by Name if it's the wrong Kind.
 	if controllerRef.Kind != controllerKind.Kind {
@@ -858,7 +858,7 @@ func (dsc *DaemonSetsController) resolveControllerRef(namespace string, controll
 //   - podsToDelete: the Pods need to be deleted on the node
 //   - failedPodsObserved: the number of failed pods on node
 //   - err: unexpected error
-func (dsc *DaemonSetsController) podsShouldBeOnNode(
+func (dsc *SetsController) podsShouldBeOnNode(
 	node *v1.Node,
 	nodeToDaemonPods map[string][]*v1.Pod,
 	ds *apps.DaemonSet,
@@ -939,7 +939,7 @@ func (dsc *DaemonSetsController) podsShouldBeOnNode(
 // After figuring out which nodes should run a Pod of ds but not yet running one and
 // which nodes should not run a Pod of ds but currently running one, it calls function
 // syncNodes with a list of pods to remove and a list of nodes to run a Pod of ds.
-func (dsc *DaemonSetsController) manage(ds *apps.DaemonSet, hash string) error {
+func (dsc *SetsController) manage(ds *apps.DaemonSet, hash string) error {
 	// Find out the pods which are created for the nodes by DaemonSet.
 	nodeToDaemonPods, err := dsc.getNodesToDaemonPods(ds)
 	if err != nil {
@@ -982,7 +982,7 @@ func (dsc *DaemonSetsController) manage(ds *apps.DaemonSet, hash string) error {
 
 // syncNodes deletes given pods and creates new daemon set pods on the given nodes
 // returns slice with erros if any
-func (dsc *DaemonSetsController) syncNodes(ds *apps.DaemonSet, podsToDelete, nodesNeedingDaemonPods []string, hash string) error {
+func (dsc *SetsController) syncNodes(ds *apps.DaemonSet, podsToDelete, nodesNeedingDaemonPods []string, hash string) error {
 	// We need to set expectations before creating/deleting pods to avoid race conditions.
 	dsKey, err := controller.KeyFunc(ds)
 	if err != nil {
@@ -1144,7 +1144,7 @@ func storeDaemonSetStatus(dsClient unversionedapps.DaemonSetInterface, ds *apps.
 	return updateErr
 }
 
-func (dsc *DaemonSetsController) updateDaemonSetStatus(ds *apps.DaemonSet, hash string) error {
+func (dsc *SetsController) updateDaemonSetStatus(ds *apps.DaemonSet, hash string) error {
 	glog.V(4).Infof("Updating daemon set status")
 	nodeToDaemonPods, err := dsc.getNodesToDaemonPods(ds)
 	if err != nil {
@@ -1205,7 +1205,7 @@ func (dsc *DaemonSetsController) updateDaemonSetStatus(ds *apps.DaemonSet, hash 
 	return nil
 }
 
-func (dsc *DaemonSetsController) syncDaemonSet(key string) error {
+func (dsc *SetsController) syncDaemonSet(key string) error {
 	startTime := time.Now()
 	defer func() {
 		glog.V(4).Infof("Finished syncing daemon set %q (%v)", key, time.Since(startTime))
@@ -1288,7 +1288,7 @@ func (dsc *DaemonSetsController) syncDaemonSet(key string) error {
 	return dsc.updateDaemonSetStatus(ds, hash)
 }
 
-func (dsc *DaemonSetsController) simulate(newPod *v1.Pod, node *v1.Node, ds *apps.DaemonSet) ([]algorithm.PredicateFailureReason, *schedulercache.NodeInfo, error) {
+func (dsc *SetsController) simulate(newPod *v1.Pod, node *v1.Node, ds *apps.DaemonSet) ([]algorithm.PredicateFailureReason, *schedulercache.NodeInfo, error) {
 	// DaemonSet pods shouldn't be deleted by NodeController in case of node problems.
 	// Add infinite toleration for taint notReady:NoExecute here
 	// to survive taint-based eviction enforced by NodeController
@@ -1370,7 +1370,7 @@ func (dsc *DaemonSetsController) simulate(newPod *v1.Pod, node *v1.Node, ds *app
 // * shouldContinueRunning:
 //     Returns true when a daemonset should continue running on a node if a daemonset pod is already
 //     running on that node.
-func (dsc *DaemonSetsController) nodeShouldRunDaemonPod(node *v1.Node, ds *apps.DaemonSet) (wantToRun, shouldSchedule, shouldContinueRunning bool, err error) {
+func (dsc *SetsController) nodeShouldRunDaemonPod(node *v1.Node, ds *apps.DaemonSet) (wantToRun, shouldSchedule, shouldContinueRunning bool, err error) {
 	newPod := NewPod(ds, node.Name)
 
 	// Because these bools require an && of all their required conditions, we start

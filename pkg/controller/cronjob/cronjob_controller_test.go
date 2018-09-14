@@ -37,8 +37,8 @@ import (
 
 var (
 	// schedule is hourly on the hour
-	onTheHour     string = "0 * * * ?"
-	errorSchedule string = "obvious error schedule"
+	onTheHour     = "0 * * * ?"
+	errorSchedule = "obvious error schedule"
 )
 
 func justBeforeTheHour() time.Time {
@@ -161,8 +161,8 @@ var (
 	A          batchV1beta1.ConcurrencyPolicy = batchV1beta1.AllowConcurrent
 	f          batchV1beta1.ConcurrencyPolicy = batchV1beta1.ForbidConcurrent
 	R          batchV1beta1.ConcurrencyPolicy = batchV1beta1.ReplaceConcurrent
-	T          bool                           = true
-	F          bool                           = false
+	T                                         = true
+	F                                         = false
 )
 
 func TestSyncOne_RunOrNot(t *testing.T) {
@@ -349,7 +349,7 @@ func TestSyncOne_RunOrNot(t *testing.T) {
 		for i := 1; i <= len(recorder.Events); i++ {
 			e := <-recorder.Events
 			if strings.HasPrefix(e, v1.EventTypeWarning) {
-				numWarnings += 1
+				numWarnings++
 			}
 		}
 		if numWarnings != tc.expectedWarnings {
