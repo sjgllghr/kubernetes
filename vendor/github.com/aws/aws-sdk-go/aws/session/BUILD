@@ -22,7 +22,8 @@ go_library(
         "//vendor/github.com/aws/aws-sdk-go/aws/defaults:go_default_library",
         "//vendor/github.com/aws/aws-sdk-go/aws/endpoints:go_default_library",
         "//vendor/github.com/aws/aws-sdk-go/aws/request:go_default_library",
-        "//vendor/github.com/go-ini/ini:go_default_library",
+        "//vendor/github.com/aws/aws-sdk-go/internal/ini:go_default_library",
+        "//vendor/github.com/aws/aws-sdk-go/internal/shareddefaults:go_default_library",
     ],
 )
 

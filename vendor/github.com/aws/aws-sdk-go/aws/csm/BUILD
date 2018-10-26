@@ -6,7 +6,7 @@ go_library(
         "doc.go",
         "enable.go",
         "metric.go",
-        "metricChan.go",
+        "metric_chan.go",
         "reporter.go",
     ],
     importmap = "k8s.io/kubernetes/vendor/github.com/aws/aws-sdk-go/aws/csm",
